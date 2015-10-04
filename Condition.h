@@ -30,4 +30,5 @@ public:
 		pthread_cond_broadcast(&condition);
 	}
 	bool waitForSeconds(int seconds);
-}
+};
+#endif
