@@ -15,10 +15,7 @@ private:
 	Condition notEmpty;
 	std::deque<T> queue;
 public:
-	BlockingQueue(){
-		mutext();
-		notEmpty(mutex);
-		queue();
+	BlockingQueue(): mutex(), notEmpty(mutex), queue(){
 	}
 
 	void put(const T &val);
