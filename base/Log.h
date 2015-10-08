@@ -3,8 +3,11 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "Mutex.h"
+#include "Buffer.h"
 #include "Condition.h"
 #include "BlockingQueue.h"
 
@@ -14,9 +17,53 @@ public:
 		DEBUG,
 		INFO,
 		WARN,
-		ERROR
+		ERROR,
+		NOTHING
 	};
 private:
-	
+	typedef boost::shared_ptr<Buffer> SharedBuffer;
+	static const int seconds = 5;
+	bool running;
+	LogLevel level;
+	FILE *file;
+	SharedBuffer curr, next;
+	Mutex mutex;
+	Condition hasBuff;
+	std::vector<SharedBuffer> buffers;
+public:
+	Log(): curr(new Buffer()), next(new Buffer()), mutex(), hasBuff(mutex){
+		//running = true;
+		level = DEBUG;
+		file = fopen("/var/Llkplatform/llk.log", "w");
+		assert(file != NULL);
+		buffers.clear();
+	}
+
+	Log(LogLevel lvl, char *path): curr(new Buffer()), next(new Buffer()), mutex(), hasBuff(mutex){
+		//running = true;
+		level = lvl;
+		file = fopen(path, "w");
+		assert(file != NULL);
+		buffers.clear();
+	}
+
+	~Log(){
+		if(running){
+			running = false;
+			hasBuffer.notify();
+		}
+		if(file != NULL) fclose(file);
+	}
+
+	void setLevel(LogLevel lvl);
+	void setFile(char *path);
+	void logDebug(const char *val, int len);
+	void logInfo(const char *val, int len);
+	void logWarn(const char *val, int len);
+	void logError(const char *val, int len);
+
+private:
+	void threadFunc();
+	void logMessage(const char *val, int len);
 };
 #endif
