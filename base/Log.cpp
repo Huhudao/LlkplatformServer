@@ -1,4 +1,5 @@
 #include "Log.h"
+#include "tools.h"
 
 void Log::setLevel(LogLevel lvl){
 	level = lvl;
@@ -20,8 +21,7 @@ void Log::logMessage(const char *val, int len){
 	else{
 		buffers.push_back(curr);
 		if(next){
-			curr = next;
-			next.reset();
+			movePtr(curr, next);
 		}
 		else{
 			curr.reset(new Buffer());
@@ -51,20 +51,18 @@ void Log::threadFunc(){
 	SharedBuffer spare1(new Buffer()), spare2(new Buffer());
 	std::vector<SharedBuffer> buffersToWrite(0);
 	while(running){
-		assert(spare1 && spare1->size() == 0);
-		assert(spare2 && spare2->size() == 0);
+		assert((spare1) && spare1->size() == 0);
+		assert((spare2) && spare2->size() == 0);
 		assert(buffersToWrite.empty());
 		MutexLockGuard lock(mutex);
 		if(buffers.empty()){
 			hasBuffer.waitForSeconds(seconds);
 		}
 		buffers.push_back(curr);
-		curr = spare1;
-		spare1.reset();
+		movePtr(curr, spare1);
 		std::swap(buffers, buffersToWrite);
 		if(!next){
-			next = spare2;
-			spare2.reset();
+			movePtr(next, spare2);
 		}
 
 		assert(!buffersToWrite.empty());

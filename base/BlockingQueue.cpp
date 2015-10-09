@@ -1,5 +1,10 @@
 #include "BlockingQueue.h"
 
+void BlockingQueue::claer(){
+	MutexLockGuard lock(mutex);
+	queue.clear();
+}
+
 template <typename T>
 void BlockingQueue::put(const T &val){
 	MutexLockGuard lock(mutex);
@@ -9,7 +14,7 @@ void BlockingQueue::put(const T &val){
 
 template <typename T>
 T BlockingQueue::take(){
-	MutexLockQuard lock(mutex);
+	MutexLockGuard lock(mutex);
 	while(queue.empty()){
 		notEmpty.wait();
 	}
@@ -22,4 +27,9 @@ T BlockingQueue::take(){
 size_t BlockingQueue::size(){
 	MutexLockGuard lock(mutex);
 	return queue.size();
+}
+
+bool BlockingQueue::empty(){
+	MutexLockGuard lock(mutex);
+	return queue.empty();
 }

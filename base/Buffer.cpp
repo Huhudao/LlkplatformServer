@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Buffer.h"
 
 size_t Buffer::size(){
@@ -10,9 +11,7 @@ size_t Buffer::sizeRemain(){
 
 void Buffer::append(char *val, int len){
 	assert(sizeRemain() - len >= 0);
-	for(int i = 0; i < len; i++){
-		buff[writeInd++] = val[i];
-	}
+	memcpy(buff + writeInd, val, sizeof(char) * len);
 }
 
 void Buffer::write(FILE *file){
