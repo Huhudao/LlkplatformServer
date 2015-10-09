@@ -47,13 +47,20 @@ void Log::logError(const char *val, int len){
 	if(ERROR >= level) logMessage(val, len);
 }
 
-void Log::threadFunc(){
+void Log::start(){
+	running = true;
+	int ret = pthread_create(&threadId, NULL, Log::threadFunc, NULL);
+	assert(ret == 0);
+}
+
+void* Log::threadFunc(){
 	SharedBuffer spare1(new Buffer()), spare2(new Buffer());
 	std::vector<SharedBuffer> buffersToWrite(0);
 	while(running){
 		assert((spare1) && spare1->size() == 0);
 		assert((spare2) && spare2->size() == 0);
 		assert(buffersToWrite.empty());
+		//assert(file != NULL);
 		MutexLockGuard lock(mutex);
 		if(buffers.empty()){
 			hasBuffer.waitForSeconds(seconds);

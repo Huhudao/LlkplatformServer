@@ -3,8 +3,9 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include <boost/shared_ptr.hpp>
+#include <pthread.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 #include "Mutex.h"
 #include "Buffer.h"
@@ -25,6 +26,7 @@ private:
 	static const int seconds = 5;
 	bool running;
 	LogLevel level;
+	pthread_t threadId;
 	FILE *file;
 	SharedBuffer curr, next;
 	Mutex mutex;
@@ -61,9 +63,10 @@ public:
 	void logInfo(const char *val, int len);
 	void logWarn(const char *val, int len);
 	void logError(const char *val, int len);
+	void start();
 
 private:
-	void threadFunc();
+	void* threadFunc();
 	void logMessage(const char *val, int len);
 };
 #endif
