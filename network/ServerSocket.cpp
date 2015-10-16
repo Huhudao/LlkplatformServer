@@ -35,11 +35,9 @@ void ServerSocket::start(){
 	assert(ret != -1);
 }
 
-ClientSocket ServerSocket::acceptClient(){
+void ServerSocket::acceptClient(ClientSocket &client){
 	socklen_t sz = sizeof(struct sockaddr);
-	ClientSocket client;
 	int clientfd = accept(sockfd, (struct sockaddr*)&client.getAddrin(), &sz);
 	assert(clientfd != -1);
 	client.setSockfd(clientfd);
-	return client;
 }

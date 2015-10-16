@@ -20,6 +20,6 @@ private:
 
 public:
 	void start();
-	ClientSocket acceptClient();
+	void acceptClient(ClientSocket &client);
 };
 #endif
