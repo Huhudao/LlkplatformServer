@@ -1,19 +1,20 @@
 #include "BlockingQueue.h"
 
-void BlockingQueue::claer(){
+template <class T>
+void BlockingQueue<T>::clear(){
 	MutexLockGuard lock(mutex);
 	queue.clear();
 }
 
-template <typename T>
-void BlockingQueue::put(const T &val){
+template <class T>
+void BlockingQueue<T>::put(const T &val){
 	MutexLockGuard lock(mutex);
 	queue.push_back(val);
 	notEmpty.notify();
 }
 
-template <typename T>
-T BlockingQueue::take(){
+template <class T>
+T BlockingQueue<T>::take(){
 	MutexLockGuard lock(mutex);
 	while(queue.empty()){
 		notEmpty.wait();
@@ -24,12 +25,14 @@ T BlockingQueue::take(){
 	return val;
 }
 
-size_t BlockingQueue::size(){
+template <class T>
+size_t BlockingQueue<T>::size(){
 	MutexLockGuard lock(mutex);
 	return queue.size();
 }
 
-bool BlockingQueue::empty(){
+template <class T>
+bool BlockingQueue<T>::empty(){
 	MutexLockGuard lock(mutex);
 	return queue.empty();
 }

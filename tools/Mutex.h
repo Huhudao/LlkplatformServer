@@ -16,11 +16,11 @@ public:
 		pthread_mutex_destroy(&mutex);
 	}
 	
-	lock(){
+	void lock(){
 		pthread_mutex_lock(&mutex);
 	}
 	
-	unlock(){
+	void unlock(){
 		pthread_mutex_unlock(&mutex);
 	}
 	
@@ -33,12 +33,11 @@ class MutexLockGuard:public boost::noncopyable{
 private:
 	Mutex &mutex;
 public:
-	explicit MutexLockGuard(Mutex &mutexP){
-		mutex = mutexP;
+	explicit MutexLockGuard(Mutex &mutexP): mutex(mutexP){
 		mutex.lock();
 	}
 	
-	~MutexLockGaurd(){
+	~MutexLockGuard(){
 		mutex.unlock();
 	}
 };

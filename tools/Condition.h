@@ -4,13 +4,14 @@
 #include <pthread.h>
 #include <boost/noncopyable.hpp>
 
+#include "Mutex.h"
+
 class Condition:public boost::noncopyable{
 private:
 	Mutex &mutex;
 	pthread_cond_t condition;
 public:
-	explicit Condition(Mutex &mutexP){
-		mutex = mutexP;
+	explicit Condition(Mutex &mutexP): mutex(mutexP) {
 		pthread_cond_init(&condition, NULL);
 	}
 

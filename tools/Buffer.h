@@ -27,7 +27,7 @@ public:
 	
 	size_t size();
 	size_t sizeRemain();
-	void append(char *val, int len);
+	void append(const char *val, int len);
 	void writeToFile(FILE *file);
 };
 

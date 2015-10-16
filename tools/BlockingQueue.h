@@ -19,7 +19,9 @@ public:
 	}
 
 	void put(const T &val);
+	void clear();
 	T take();
 	size_t size();
+	bool empty();
 };
 #endif

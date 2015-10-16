@@ -1,5 +1,5 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef HELPS_H
+#define HELPS_H
 
 #include <boost/shared_ptr.hpp>
 

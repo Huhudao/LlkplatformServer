@@ -9,6 +9,7 @@
 
 #include "Mutex.h"
 #include "Buffer.h"
+#include "Thread.h"
 #include "Condition.h"
 #include "BlockingQueue.h"
 
@@ -22,37 +23,27 @@ public:
 		NOTHING
 	};
 private:
-	typedef boost::shared_ptr<Buffer> SharedBuffer;
+	typedef boost::shared_ptr<Buffer> BufferPtr;
 	static const int seconds = 5;
 	bool running;
 	LogLevel level;
 	pthread_t threadId;
 	FILE *file;
-	SharedBuffer curr, next;
+	BufferPtr curr, next;
 	Mutex mutex;
-	Condition hasBuff;
-	std::vector<SharedBuffer> buffers;
+	Condition hasBuffer;
+	std::vector<BufferPtr> buffers;
+	Thread thread;
 public:
-	Log(): curr(new Buffer()), next(new Buffer()), mutex(), hasBuff(mutex){
-		//running = true;
-		level = DEBUG;
-		file = fopen("/var/Llkplatform/llk.log", "w");
-		assert(file != NULL);
-		buffers.clear();
-	}
+	Log();
 
-	Log(LogLevel lvl, char *path): curr(new Buffer()), next(new Buffer()), mutex(), hasBuff(mutex){
-		//running = true;
-		level = lvl;
-		file = fopen(path, "w");
-		assert(file != NULL);
-		buffers.clear();
-	}
+	Log(LogLevel lvl, char *path);
 
 	~Log(){
 		if(running){
 			running = false;
 			hasBuffer.notify();
+			thread.join();
 		}
 		if(file != NULL) fclose(file);
 	}
@@ -66,7 +57,7 @@ public:
 	void start();
 
 private:
-	void* threadFunc();
+	void threadFunc();
 	void logMessage(const char *val, int len);
 };
 #endif

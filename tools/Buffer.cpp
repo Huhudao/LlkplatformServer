@@ -9,12 +9,12 @@ size_t Buffer::sizeRemain(){
 	return maxLength - writeInd;
 }
 
-void Buffer::append(char *val, int len){
+void Buffer::append(const char *val, int len){
 	assert(sizeRemain() - len >= 0);
 	memcpy(buff + writeInd, val, sizeof(char) * len);
 }
 
-void Buffer::write(FILE *file){
+void Buffer::writeToFile(FILE *file){
 	assert(writeInd <= maxLength);
 	if(writeInd <= 0) return;
 	buff[writeInd++] = '\0';

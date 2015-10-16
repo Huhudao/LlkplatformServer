@@ -1,5 +1,33 @@
+#include <boost/bind.hpp>
+
 #include "Log.h"
-#include "tools.h"
+#include "helps.h"
+
+Log::Log():
+	curr(new Buffer()),
+	next(new Buffer()),
+	mutex(),
+	hasBuffer(mutex),
+	thread(boost::bind(&Log::threadFunc, this), std::string("Logger")) {
+	//running = true;
+	level = DEBUG;
+	file = fopen("/var/Llkplatform/llk.log", "w");
+	assert(file != NULL);
+	buffers.clear();
+}
+
+Log::Log(LogLevel lvl, char *path):
+	curr(new Buffer()),
+	next(new Buffer()),
+	mutex(),
+	hasBuffer(mutex),
+	thread(boost::bind(&Log::threadFunc, this), std::string("Logger")) {
+	//running = true;
+	level = lvl;
+	file = fopen(path, "w");
+	assert(file != NULL);
+	buffers.clear();
+}
 
 void Log::setLevel(LogLevel lvl){
 	level = lvl;
@@ -49,13 +77,12 @@ void Log::logError(const char *val, int len){
 
 void Log::start(){
 	running = true;
-	int ret = pthread_create(&threadId, NULL, Log::threadFunc, NULL);
-	assert(ret == 0);
+	thread.start();
 }
 
-void* Log::threadFunc(){
-	SharedBuffer spare1(new Buffer()), spare2(new Buffer());
-	std::vector<SharedBuffer> buffersToWrite(0);
+void Log::threadFunc(){
+	BufferPtr spare1(new Buffer()), spare2(new Buffer());
+	std::vector<BufferPtr> buffersToWrite(0);
 	while(running){
 		assert((spare1) && spare1->size() == 0);
 		assert((spare2) && spare2->size() == 0);
