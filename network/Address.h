@@ -26,8 +26,8 @@ public:
 
 	~Address(){}
 	
-	struct sockaddr_in& getAddrin(){
-		return addr;
+	struct sockaddr_in* getAddrin(){
+		return &addr;
 	}
 };
 #endif

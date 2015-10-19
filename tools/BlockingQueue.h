@@ -18,6 +18,8 @@ public:
 	BlockingQueue(): mutex(), notEmpty(mutex), queue(){
 	}
 
+	~BlockingQueue(){}
+
 	void put(const T &val);
 	void clear();
 	T take();

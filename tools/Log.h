@@ -60,4 +60,6 @@ private:
 	void threadFunc();
 	void logMessage(const char *val, int len);
 };
+
+extern Log logger;
 #endif

@@ -11,7 +11,7 @@ void ClientSocket::setSockfd(int fd){
 	sockfd = fd;
 }
 
-struct sockaddr_in& ClientSocket::getAddrin(){
+struct sockaddr_in* ClientSocket::getAddrin(){
 	return addr.getAddrin();
 }
 
@@ -20,13 +20,16 @@ void ClientSocket::setRecvTimeo(struct timeval &tv){
 	assert(ret == 0);
 }
 
-int ClientSocket::recvBuf(void *buf, size_t mxSize){
-	char *buff = buf;
-	int ret = recv(sockfd, buff, mxSize, 0);
+int ClientSocket::recvBuf(const char *buf, size_t mxSize){
+	int ret = recv(sockfd, buf, mxSize, 0);
 	return ret;
 }
 
-int ClientSocket::sendBuf(void *buf, size_t sz){
+int ClientSocket::sendBuf(const char *buf, size_t sz){
 	int ret = send(sockfd, buf, sz, 0);
 	return ret;
+}
+
+void ClientSocket::close(){
+	close(sockfd);
 }

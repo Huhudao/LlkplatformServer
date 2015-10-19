@@ -1,9 +1,9 @@
 #include "ThreadPool.h"
 
 void ThreadPool::start(){
+	MutexLockGuard lock(mutex);
 	assert(threads.empty());
 	assert(taskQueue.empty());
-	MutexLockGuard lock(mutex);
 	running = true;
 	for(size_t i = 0; i < maxNumThread; i++){
 		ThreadPtr thread(new Thread(boost::bind(&ThreadPool::threadFunc, this), "InPool"));

@@ -2,6 +2,7 @@
 #define LLKINFO_H
 
 #include <vector>
+#include <string>
 #include <utility>
 #include <assert.h>
 
@@ -18,7 +19,7 @@ private:
 	const int mxNumPerPic = 10;
 	size_t row, col;
 	int picRemain;
-	Mutex mutex;
+	//Mutex mutex;
 	vector<vector<int> > pictures;
 	vector<vector<vector<int> > > canGo;
 public:
@@ -39,5 +40,6 @@ public:
 	bool canGetHor(size_t x1, size_t y1, size_t x2, size_t y2);
 	bool canGetVer(size_t x1, size_t y1, size_t x2, size_t y2);
 	void update(size_t x, size_t y);
+	string picsToStr();
 };
 #endif

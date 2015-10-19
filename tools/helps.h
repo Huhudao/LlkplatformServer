@@ -9,4 +9,10 @@ void movePtr(boost::shared_ptr<T> &sp1, boost::shared_ptr<T> &sp2){
 	sp2.reset();
 }
 
+void mod(int &a, const int &m){
+	while(a >= m){
+		a -= m;
+	}
+}
+
 #endif

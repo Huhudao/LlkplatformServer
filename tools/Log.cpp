@@ -114,3 +114,5 @@ void Log::threadFunc(){
 		buffersToWrite.clear();
 	}
 }
+
+Log logger;

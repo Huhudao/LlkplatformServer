@@ -1,15 +1,14 @@
 #include <stdlib.h>
 #include "LlkInfo.h"
 
-LlkInfo::LlkInfo(): row(dftRow), col(dftCol), mutex(){
-	init();
+LlkInfo::LlkInfo(): row(dftRow), col(dftCol){
 }
 
-LlkInfo::LlkInfo(size_t n, size_t m): row(n), col(m), mutex(){
-	init();
+LlkInfo::LlkInfo(size_t n, size_t m): row(n), col(m){
 }
 
 void LlkInfo::init(){
+	//MutexLockGuard lock(mutex);
 	picRemain = row * col;
 	pictures = vector<vector<int> >(row, vector<int>(col, -1));
 	canGo = vector<vector<vector<int> > >(row, vector<vector<int> >(col, vector<int>(4)));
@@ -49,15 +48,17 @@ void LlkInfo::buildPics(){
 }
 
 void LlkInfo::setSize(size_t n, size_t m){
-	MutexLockGuard lock(mutex);
+	//MutexLockGuard lock(mutex);
 	row = n, col = m;
 	init();
 }
 
 pair<bool, bool> LlkInfo::link(size_t x1, size_t y1, size_t x2, size_t y2){
 	assert(x1 != x2 || y1 != y2);
-	MutexLockGuard lock(mutex);
+	//MutexLockGuard lock(mutex);
 	pair<bool, bool> res = make_pair(0, 0);
+	if(x1 < 0 || x1 >= row || x2 < 0 || x2 >= row) return res;
+	if(y1 < 0 || y1 >= col || y2 < 0 || y2 >= col) return res;
 	if(pictures[x1][y1] < 0 || pictures[x2][y2] < 0){
 		res.second = (picRemain == 0);
 		return res;

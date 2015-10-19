@@ -35,9 +35,11 @@ void ServerSocket::start(){
 	assert(ret != -1);
 }
 
-void ServerSocket::acceptClient(clientPtr client){
+ServerSocket::ClientPtr ServerSocket::acceptClient(){
+	ClientPtr client(new ClientSocket());
 	socklen_t sz = sizeof(struct sockaddr);
-	int clientfd = accept(sockfd, (struct sockaddr*)&client->getAddrin(), &sz);
+	int clientfd = accept(sockfd, (struct sockaddr*)client->getAddrin(), &sz);
 	assert(clientfd != -1);
 	client->setSockfd(clientfd);
+	return client;
 }
