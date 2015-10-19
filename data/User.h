@@ -20,16 +20,16 @@ class GameTable;
 
 class User: public boost::noncopyable{
 public:
-	typedef boost::shared_ptr<ClientSocket> ClienPtr;
+	typedef boost::shared_ptr<ClientSocket> ClientPtr;
 	typedef boost::shared_ptr<GameTable> TablePtr;
 private:
 	static Mutex mutexUsers;
 	static set<User*> uers;
-	const int mxLen = 15;
+	static const int mxLen = 15;
 	bool hasSignIn;
 	bool ready;
 	int score;
-	MYSQL *mysql;//TODO mutex
+	MYSQL *mysql;
 	clock_t lastTime;
 	Mutex mutexSend;
 	Mutex mutexRdSc;
@@ -52,9 +52,10 @@ public:
 	void plusScore();
 	int getScore();
 	string gameNums();
-	void win();//TODO ready = false;
+	void win();
 	void lose();
 	void sendMsg(string val);
+	void threadFunc();
 	
 private:
 	bool signUp(string &name, string &pwd);
@@ -65,6 +66,7 @@ private:
 	void link(string &sx1, string &sy1, string &sx2, string &sy2);
 	void beReady();
 	void unReady();
+	void echo();//TODO
 	void end();
 	void logOut();
 	void closeSock();
@@ -74,6 +76,5 @@ private:
 	void destroy();
 	void solve(int id, string *strs, bool &connecting);
 	pair<int, int> qryType(string &str);
-	void threadFunc();
 };
 #endif

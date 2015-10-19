@@ -10,6 +10,7 @@ class Address{
 private:
 	struct sockaddr_in addr;
 public:
+	Address(){}
 	Address(sa_family_t family, in_port_t port, const char *ip){
 		addr.sin_family = family;
 		addr.sin_port = htons(port);

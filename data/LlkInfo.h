@@ -14,9 +14,9 @@ using namespace std;
 class LlkInfo{
 private:
 	static const int picNum = 30;
-	const size_t dftRow = 16;
-	const size_t dftCol = 16;
-	const int mxNumPerPic = 10;
+	static const size_t dftRow = 16;
+	static const size_t dftCol = 16;
+	static const int mxNumPerPic = 10;
 	size_t row, col;
 	int picRemain;
 	//Mutex mutex;

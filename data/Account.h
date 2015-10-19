@@ -5,14 +5,14 @@
 #include <mysql/mysql.h>
 #include <boost/noncopyable.hpp>
 
-class Account:: public boost::noncopyable{
+class Account: public boost::noncopyable{
 private:
 	int gameAll;
 	int gameWin;
 	unsigned int id;
 	std::string name;
 public:
-	Account(): id(0), gameALL(-1), gameWin(-1), name(){}
+	Account(): id(0), gameAll(-1), gameWin(-1), name(){}
 	
 	Account(unsigned int uid, int ga, int gw, const char *nm): id(uid), gameAll(ga), gameWin(gw), name(nm){}
 	

@@ -19,7 +19,7 @@ public:
 	typedef boost::function<void ()> Task;
 	typedef boost::shared_ptr<Thread> ThreadPtr;
 private:
-	const size_t defaultSize = 100;
+	static const size_t defaultSize = 100;
 	bool running;
 	size_t maxNumThread;
 	size_t maxNumTask;

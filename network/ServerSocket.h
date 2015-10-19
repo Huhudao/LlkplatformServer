@@ -9,7 +9,7 @@
 
 class ServerSocket: protected Socket{
 private:
-	const int backlog = 128;
+	static const int backlog = 128;
 public:
 	typedef boost::shared_ptr<ClientSocket> ClientPtr;
 	explicit ServerSocket(Address theAddr);
