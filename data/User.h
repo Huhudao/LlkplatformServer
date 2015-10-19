@@ -38,8 +38,8 @@ private:
 	TablePtr table;
 	Account account;
 public:
-	explicit User(ClientPtr sk): hasSignIn(0), ready(0), score(0),
-		mysql(NULL), lastTime(0), mutexSend(), mutexRdSc(),
+	User(ClientPtr sk, MYSQL *sql): hasSignIn(0), ready(0), score(0),
+		mysql(sql), lastTime(0), mutexSend(), mutexRdSc(),
 		mutexAcco(), sock(sk), table(), account(){}
 	~User(){}
 	

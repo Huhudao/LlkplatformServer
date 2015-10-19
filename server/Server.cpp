@@ -10,7 +10,7 @@ int main(){
 	server.start();
 	while(true){
 		ServerSocket::ClientPtr client = server.acceptClient();
-		User *user = new User(client);
+		User *user = new User(client, dbconnPool.take());
 		threadPool.runTask(boost::bind(&User::threadFunc, user));
 	}
 }
