@@ -24,7 +24,7 @@ public:
 	typedef boost::shared_ptr<GameTable> TablePtr;
 private:
 	static Mutex mutexUsers;
-	static set<User*> uers;
+	static set<User*> users;
 	static const int mxLen = 15;
 	bool hasSignIn;
 	bool ready;
@@ -66,7 +66,7 @@ private:
 	void link(string &sx1, string &sy1, string &sx2, string &sy2);
 	void beReady();
 	void unReady();
-	void echo();//TODO
+	void echo();
 	void end();
 	void logOut();
 	void closeSock();

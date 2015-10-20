@@ -20,7 +20,7 @@ void ClientSocket::setRecvTimeo(struct timeval &tv){
 	assert(ret == 0);
 }
 
-int ClientSocket::recvBuf(const char *buf, size_t mxSize){
+int ClientSocket::recvBuf(char *buf, size_t mxSize){
 	int ret = recv(sockfd, buf, mxSize, 0);
 	return ret;
 }
@@ -30,6 +30,6 @@ int ClientSocket::sendBuf(const char *buf, size_t sz){
 	return ret;
 }
 
-void ClientSocket::close(){
+void ClientSocket::closeSock(){
 	close(sockfd);
 }

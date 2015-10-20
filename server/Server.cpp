@@ -1,6 +1,10 @@
 #include "Server.h"
 
+Log logger;
+
 int main(){
+	logger.start();
+	logger.logInfo("Server started\n");
 	ThreadPool threadPool;
 	threadPool.start();
 	DBConnPool dbconnPool;

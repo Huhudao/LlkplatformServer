@@ -9,9 +9,8 @@
 
 #include "Mutex.h"
 #include "Buffer.h"
-#include "Thread.h"
 #include "Condition.h"
-#include "BlockingQueue.h"
+#include "Thread.h"
 
 class Log{
 public:
@@ -50,15 +49,15 @@ public:
 
 	void setLevel(LogLevel lvl);
 	void setFile(char *path);
-	void logDebug(const char *val, int len);
-	void logInfo(const char *val, int len);
-	void logWarn(const char *val, int len);
-	void logError(const char *val, int len);
+	void logDebug(const char *val);
+	void logInfo(const char *val);
+	void logWarn(const char *val);
+	void logError(const char *val);
 	void start();
 
 private:
 	void threadFunc();
-	void logMessage(const char *val, int len);
+	void logMessage(const char *type, const char *val);
 };
 
 extern Log logger;

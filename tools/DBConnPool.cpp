@@ -1,5 +1,7 @@
 #include <assert.h>
+
 #include "DBConnPool.h"
+#include "Log.h"
 
 DBConnPool::DBConnPool(): mutex(){
 	initSize = 100;
@@ -22,6 +24,7 @@ DBConnPool::~DBConnPool(){
 }
 
 void DBConnPool::start(){
+	logger.logInfo("DBConnPool starting...");
 	MutexLockGuard lock(mutex);
 	assert(spare.empty());
 	assert(working.empty());
@@ -32,9 +35,10 @@ void DBConnPool::start(){
 }
 
 void DBConnPool::put(MYSQL *mysql){
+	logger.logInfo("put conn into pool.");
 	MutexLockGuard lock(mutex);
 	if(working.find(mysql) == working.end()){
-		//TODO error log
+		logger.logError("putting an exsited conn into pool.");
 	}
 	else{
 		working.erase(mysql);
@@ -43,6 +47,7 @@ void DBConnPool::put(MYSQL *mysql){
 }
 
 MYSQL* DBConnPool::take(){
+	logger.logDebug("take a conn from pool.");
 	MutexLockGuard lock(mutex);
 	MYSQL *mysql;
 	if(spare.empty()){

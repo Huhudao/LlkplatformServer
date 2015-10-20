@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <string.h>
 #include <assert.h>
 
 #include "../tools/Mutex.h"

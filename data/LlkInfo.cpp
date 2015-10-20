@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include "LlkInfo.h"
+#include "../tools/Log.h"
+#include "../tools/helps.h"
 
 LlkInfo::LlkInfo(): row(dftRow), col(dftCol){
 }
@@ -8,7 +10,7 @@ LlkInfo::LlkInfo(size_t n, size_t m): row(n), col(m){
 }
 
 void LlkInfo::init(){
-	//MutexLockGuard lock(mutex);
+	logger.logDebug("init llk game.");
 	picRemain = row * col;
 	pictures = vector<vector<int> >(row, vector<int>(col, -1));
 	canGo = vector<vector<vector<int> > >(row, vector<vector<int> >(col, vector<int>(4)));
@@ -48,14 +50,13 @@ void LlkInfo::buildPics(){
 }
 
 void LlkInfo::setSize(size_t n, size_t m){
-	//MutexLockGuard lock(mutex);
 	row = n, col = m;
 	init();
 }
 
 pair<bool, bool> LlkInfo::link(size_t x1, size_t y1, size_t x2, size_t y2){
 	assert(x1 != x2 || y1 != y2);
-	//MutexLockGuard lock(mutex);
+	logger.logDebug("user linking.");
 	pair<bool, bool> res = make_pair(0, 0);
 	if(x1 < 0 || x1 >= row || x2 < 0 || x2 >= row) return res;
 	if(y1 < 0 || y1 >= col || y2 < 0 || y2 >= col) return res;
@@ -82,6 +83,7 @@ pair<bool, bool> LlkInfo::link(size_t x1, size_t y1, size_t x2, size_t y2){
 }
 
 bool LlkInfo::canGetHor(size_t x1, size_t y1, size_t x2,size_t y2){
+	logger.logDebug("link horizontal.");
 	if(y1 > y2){
 		swap(x1, x2);
 		swap(y1, y2);
@@ -97,6 +99,7 @@ bool LlkInfo::canGetHor(size_t x1, size_t y1, size_t x2,size_t y2){
 }
 
 bool LlkInfo::canGetVer(size_t x1, size_t y1, size_t x2, size_t y2){
+	logger.logDebug("link vertical.");
 	if(x1 > x2){
 		swap(x1, x2);
 		swap(y1, y2);
@@ -112,6 +115,7 @@ bool LlkInfo::canGetVer(size_t x1, size_t y1, size_t x2, size_t y2){
 }
 
 void LlkInfo::update(size_t x, size_t y){
+	logger.logDebug("updating game.");
 	int previ = (x + 1 < row ? x + 1 : x);
 	for(size_t i = x; i >= 0; i--){
 		canGo[i][y][LlkInfo::down] = canGo[previ][y][LlkInfo::down];
@@ -132,4 +136,19 @@ void LlkInfo::update(size_t x, size_t y){
 		canGo[x][j][LlkInfo::left] = canGo[x][prevj][LlkInfo::left];
 		if(pictures[x][j] >= 0) break;
 	}
+}
+
+string LlkInfo::picsToStr(){
+	char str[row * col * 5 + 15];
+	int pos = 0;
+	memset(str, 0, sizeof(str));
+	sprintf(str + pos, "%d\n%d\n", row, col);
+	while(str[pos] != '\0') pos++;
+	for(size_t i = 0; i < row; i++){
+		for(size_t j = 0; j < col; j++){
+			sprintf(str + pos, "%d\n", pictures[i][j]);
+			while(str[pos] != '\0') pos++;
+		}
+	}
+	return string(str);
 }

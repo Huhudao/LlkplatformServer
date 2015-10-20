@@ -1,13 +1,15 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/time.h>
 #include "User.h"
 #include "GameTable.h"
 #include "../tools/helps.h"
+#include "../tools/Log.h"
 
 Mutex User::mutexUsers;
-std::set<User*> User::users;
-                                            //id stringNeed
+set<User*> User::users;
+                                       //id stringNeed
 const string snupP = "Signup\n";       //1  2
 const string sninP = "Signin\n";       //2  2
 const string sninyP = "SigninYes\n";   
@@ -20,11 +22,13 @@ const string chatP = "Chat\n";         //7  1
 const string linkP = "Link\n";         //8  4
 const string logoutP = "Logout\n";     //9  0
 const string endP = "End\n";           //10 0
+const string echoP = "Echo\n";         //11 0
 const string yesP = "Yes\n";
 const string noP = "No\n";
 const int sec = 5;
 const int usec = 0;
 const int mxBuf = 128;
+const int logsz = 50;
 const clock_t mxOff = 8000;
 
 void User::push(User *u){
@@ -37,9 +41,9 @@ void User::erase(User *u){
 	users.erase(u);
 }
 
-std::string User::allUsers(){
+string User::allUsers(){
 	MutexLockGuard lock(mutexUsers);
-	string all = string(itoa(user.size())) + "\n";
+	string all = uitos(users.size()) + "\n";
 	for(set<User*>::iterator it = users.begin(); it != users.end(); it++){
 		all += (*it)->getName() + "\n" + (*it)->gameNums();
 	}
@@ -72,14 +76,14 @@ int User::getScore(){
 
 string User::gameNums(){
 	MutexLockGuard lock(mutexAcco);
-	return string(itoa(account.getAll()) + "\n" + itoa(account.getWin()) + "\n");
+	return uitos(account.getAll()) + "\n" + uitos(account.getWin()) + "\n";
 }
 
 void User::win(){
 	init();
 	MutexLockGuard lock(mutexAcco);
 	account.plusAll();
-	account.pluswin();
+	account.plusWin();
 }
 
 void User::lose(){
@@ -98,6 +102,9 @@ bool User::signUp(string &name, string &pwd){
 		sendMsg(snupP + noP);
 		return false;
 	}
+	char cstr[logsz];
+	sprintf(cstr, "%s signing up.", name.c_str());
+	logger.logInfo(cstr);
 	char query[100];
 	sprintf(query, "select id from userinfo where name = \'%s\'", name.c_str());
 	int ret = mysql_query(mysql, query);
@@ -108,8 +115,7 @@ bool User::signUp(string &name, string &pwd){
 		sendMsg(snupP + noP);
 		return false;
 	}
-	sprintf(query, "insert userinfo set name = \'%s\', pwd = \'%s\',
-			rgtime = now(), lastonline = now()", name.c_str(), pwd.c_str());
+	sprintf(query, "insert userinfo set name = \'%s\', pwd = \'%s\', rgtime = now(), lastonline = now()", name.c_str(), pwd.c_str());
 	ret = mysql_query(mysql, query);
 	assert(ret == 0);
 	sendMsg(snupP + yesP);
@@ -117,9 +123,15 @@ bool User::signUp(string &name, string &pwd){
 }
 
 bool User::signIn(string &name, string &pwd){
+	if(hasSignIn){
+		logger.logError("user has signed in.");
+		return false;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s is signing in.", name.c_str());
+	logger.logInfo(cstr);
 	char query[100];
-	sprintf(query, "select id, gameall, gamewin from userinfo
-			where name = \'%s\' and pwd = \'%s\'", name.c_str(), pwd.c_str());
+	sprintf(query, "select id, gameall, gamewin from userinfo where name = \'%s\' and pwd = \'%s\'", name.c_str(), pwd.c_str());
 	int ret = mysql_query(mysql, query);
 	assert(ret == 0);
 	MYSQL_RES *res = mysql_store_result(mysql);
@@ -132,7 +144,7 @@ bool User::signIn(string &name, string &pwd){
 	assert(mysql_num_fields(res) == 3);
 	assert(atoi(row[0]) > 0);
 	account.logIn(atoi(row[0]), atoi(row[1]), atoi(row[2]), name.c_str());
-	hassignIn = true;
+	hasSignIn = true;
 	push(this);
 	sendMsg(sninyP + allUsers() + GameTable::allTables());
 	broadCast(sninP + account.getName() + "\n" + row[1] + "\n" + row[2] + "\n");
@@ -140,6 +152,12 @@ bool User::signIn(string &name, string &pwd){
 }
 
 bool User::sit(string &stableId, string &sp, string &sn){
+	if(!checkSigned()){
+		return false;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s is sitting into table %s", getName().c_str(), stableId.c_str());
+	logger.logDebug(cstr);
 	int tableId = stoi(stableId), p = stoi(sp), n = stoi(sn);
 	User::TablePtr theTable;
 	if(tableId == 0){
@@ -152,54 +170,103 @@ bool User::sit(string &stableId, string &sp, string &sn){
 		if(theTable->attach(this)){
 			table = theTable;
 			init();
-			broadCast(sitP + account.getName() + "\n" + stableId + "\n"
+			broadCast(sitP + getName() + "\n" + stableId + "\n"
 					+ sp + "\n");
 			return true;
 		}
 		else{
-			//TODO log info
+			logger.logDebug("table is full");
 			return false;
 		}
 	}
 	else{
-		//TODO log error
+		char logerr[logsz];
+		sprintf(logerr, "%s is sitting into a table with a wrong id pos: %d.", getName().c_str(), p);
+		logger.logError(logerr);
 		return false;
 	}
 }
 
 void User::stand(){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s stand.", getName().c_str());
+	logger.logDebug(cstr);
 	init();
 	if(table){
 		table->detach(this);
 		table.reset();
-		broadcast(standP + account.getName() + "\n");
+		broadCast(standP + account.getName() + "\n");
 	}
 }
 
 void User::chat(string &val){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s chat.", getName().c_str());
+	logger.logDebug(cstr);
 	table->chat(this, val.c_str());
 }
 
 void User::link(string &sx1, string &sy1, string &sx2, string &sy2){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s link.", getName().c_str());
+	logger.logDebug(cstr);
 	table->link(this, stoi(sx1), stoi(sy1), stoi(sx2), stoi(sy2));
 }
 
 void User::beReady(){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s ready.", getName().c_str());
+	logger.logDebug(cstr);
 	MutexLockGuard lock(mutexRdSc);
 	ready = true;
 	table->getReady(this);
 }
 
 void User::unReady(){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s unready.", getName().c_str());
+	logger.logDebug(cstr);
 	MutexLockGuard lock(mutexRdSc);
 	ready = false;
 	table->unReady(this);
+}
+
+void User::echo(){
+	sendMsg(echoP);
+}
+
+void User::end(){
+	if(!checkSat()){
+		return;
+	}
+	char cstr[logsz];
+	sprintf(cstr, "%s said game end.", getName().c_str());
+	logger.logDebug(cstr);
+	table->end(this);
 }
 
 void User::logOut(){
 	if(!hasSignIn){
 		return;
 	}
+	char cstr[logsz];
+	sprintf(cstr, "%s logout.", getName().c_str());
+	logger.logInfo(cstr);
 	hasSignIn = false;
 	account.logOut(mysql);
 	stand();
@@ -208,12 +275,12 @@ void User::logOut(){
 }
 
 void User::closeSock(){
-	close(sock);
+	sock->closeSock();
 }
 
 bool User::checkSigned(){
 	if(!hasSignIn){
-		//TODO log error
+		logger.logError("user not signed in.");
 		return false;
 	}
 	return true;
@@ -224,7 +291,9 @@ bool User::checkSat(){
 		return false;
 	}
 	if(!table){
-		//TODO log error
+		char cstr[logsz];
+		sprintf(cstr, "%s not sat.", getName().c_str());
+		logger.logError(cstr);
 		return false;
 	}
 	return true;
@@ -245,7 +314,7 @@ void User::solve(int id, string *strs, bool &connecting){
 	switch(id){
 		case 1: signUp(strs[0], strs[1]); break;
 		case 2: signIn(strs[0], strs[1]); break;
-		case 3: sit(strs[0], strs[1]); break;
+		case 3: sit(strs[0], strs[1], strs[2]); break;
 		case 4: stand(); break;
 		case 5: beReady(); break;
 		case 6: unReady(); break;
@@ -253,6 +322,8 @@ void User::solve(int id, string *strs, bool &connecting){
 		case 8: link(strs[0], strs[1], strs[2], strs[3]); break;
 		case 9: connecting = false; break;
 		case 10: end(); break;
+		case 11: echo(); break;
+		default: logger.logError("wrong qry id.");
 	}
 }
 
@@ -267,13 +338,14 @@ pair<int, int> User::qryType(string &str){
 	else if(str == linkP) return make_pair(8, 4);
 	else if(str == logoutP) return make_pair(9, 0);
 	else if(str == endP) return make_pair(10, 0);
+	else if(str == echoP) return make_pair(11, 0);
 	else{
-		//TODO log error
+		logger.logError("wrong qry type.");
 	}
 }
 
 void User::threadFunc(){
-	bool conneting = true;
+	bool connecting = true;
 	clock_t timeNow;
 	struct timeval tv;
 	tv.tv_sec = sec;
@@ -283,10 +355,11 @@ void User::threadFunc(){
 	int begin = 0, end = 0, num = 0, recvNum = 0, nend = 0;
 	string cmd;
 	string args[4];
+	int argsNum = 0;
 	pair<int, int> qry(0, 0);
 	while(connecting){
 		if(num == mxBuf){
-			//TODO log error
+			logger.logError("socket buf full and not token.");
 			connecting = false;
 			break;
 		}
@@ -298,7 +371,8 @@ void User::threadFunc(){
 		}
 		timeNow = clock();
 		if(recvNum <= 0 || (lastTime > 0 && recvNum - lastTime > mxOff)){
-			//TODO log info
+			if(recvNum < 0) logger.logError("socket recv error.");
+			else logger.logInfo("connection out.");
 			connecting = false;
 			break;
 		}
@@ -316,20 +390,20 @@ void User::threadFunc(){
 				}
 				begin = i + 1;
 				num -= cmd.length();
-				mod(begin, mxbuf);
-				if(qry.first == 0) qry = qrytype(cmd);
-				else args[argsNum++] = cmd.strlen(0, cmd.length() - 1);
+				mod(begin, mxBuf);
+				if(qry.first == 0) qry = qryType(cmd);
+				else args[argsNum++] = cmd.substr(0, cmd.length() - 1);
 				if(argsNum == qry.second){
 					solve(qry.first, args, connecting);
 					qry = make_pair(0, 0);
 					argsNum = 0;
 				}
 				else{
-					//TODO log error
+					logger.logError("qry args wrong.");
 				}
 			}
 			i++;
-			mod(i, mxbuf);
+			mod(i, mxBuf);
 		}
 	}
 	logOut();

@@ -1,4 +1,5 @@
 #include "ServerSocket.h"
+#include "../tools/Log.h"
 
 ServerSocket::ServerSocket(Address theAddr){
 	initSock();
@@ -29,13 +30,14 @@ void ServerSocket::stop(){
 }
 
 void ServerSocket::start(){
-	int ret = bind(sockfd, (struct sockaddr*)&addr.getAddrin, sizeof(struct sockaddr));
+	int ret = bind(sockfd, (struct sockaddr*)addr.getAddrin(), sizeof(struct sockaddr));
 	assert(ret != -1);
 	ret = listen(sockfd, backlog);
 	assert(ret != -1);
 }
 
 ServerSocket::ClientPtr ServerSocket::acceptClient(){
+	logger.logDebug("receiving client.");
 	ClientPtr client(new ClientSocket());
 	socklen_t sz = sizeof(struct sockaddr);
 	int clientfd = accept(sockfd, (struct sockaddr*)client->getAddrin(), &sz);

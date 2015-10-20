@@ -1,4 +1,5 @@
 #include "Thread.h"
+#include "Log.h"
 
 Thread::Thread(const Func &func, const std::string &nm):started(false), joined(false), run(func), name(nm){
 }

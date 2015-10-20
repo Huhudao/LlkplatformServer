@@ -1,6 +1,9 @@
 #include <stdlib.h>
+
 #include "User.h"
 #include "GameTable.h"
+#include "../tools/Log.h"
+#include "../tools/helps.h"
 
 Mutex GameTable::mutexNum;
 int GameTable::tableNum = 1;
@@ -13,7 +16,7 @@ GameTable::TablePtr GameTable::getTable(int id){
 	MutexLockGuard lock(mutexNum);
 	TablePtr table;
 	if(tables.find(id) == tables.end()){
-		//TODO log error
+		logger.logError("getting info from a wrong tableid.");
 	}
 	else{
 		table = tables[id];
@@ -22,22 +25,20 @@ GameTable::TablePtr GameTable::getTable(int id){
 }
 
 void GameTable::put(TablePtr table){
-	MutexLockGuard lock(mutexNum);
+	logger.logDebug("put a table.");
 	tables[table->tableId] = table;
 }
 
 GameTable::TablePtr GameTable::createTable(int p, int n){
-	TablePtr table;
-	{
-		MutexLockGuard lock(mutexNum);
-		table.reset(new GameTable(++tableNum, p, n));
-	}
+	logger.logInfo("user creating a table.");
+	MutexLockGuard lock(mutexNum);
+	TablePtr table(new GameTable(++tableNum, p, n));
 	put(table);
 }
 
 std::string GameTable::allTables(){
 	MutexLockGuard lock(mutexNum);
-	std::string all = std::string(itoa(tables.size())) + "\n";
+	std::string all = uitos(tables.size()) + "\n";
 	for(std::map<int, TablePtr>::iterator it = tables.begin(); it != tables.end(); it++){
 		all += it->second->tableInfo();
 	}
@@ -45,6 +46,9 @@ std::string GameTable::allTables(){
 }
 
 bool GameTable::isStarted(){
+	char cstr[50];
+	sprintf(cstr, "table %d is starting.", tableId);
+	logger.logInfo(cstr);
 	MutexLockGuard lock(mutex);
 	return started;
 }
@@ -62,7 +66,7 @@ bool GameTable::attach(User *u){
 
 std::string GameTable::tableInfo(){
 	MutexLockGuard lock(mutex);
-	std::string res = std::string(itoa(tableId)) + "\n" + itoa(pos) + "\n" + itoa(users.size()) + "\n";
+	std::string res = uitos(tableId) + "\n" + uitos(pos) + "\n" + uitos(users.size()) + "\n";
 	for(std::set<User*>::iterator it = users.begin(); it != users.end(); it++){
 		res += (*it)->getName() + "\n";
 	}
@@ -72,13 +76,12 @@ std::string GameTable::tableInfo(){
 void GameTable::detach(User *u){
 	MutexLockGuard lock(mutex);
 	if(users.find(u) == users.end()){
-		//TODO log error
+		logger.logError("user is not sitting in this table.");
 		return;
 	}
 	if(u->isReady()){
 		readyNum--;
 	}
-	//broadCast(("Stand\n" + u->getName() + "\n").c_str());
 	users.erase(u);
 	if(users.empty()){
 		MutexLockGuard lockNum(mutexNum);
@@ -98,7 +101,7 @@ void GameTable::getReady(User *u){
 void GameTable::unReady(User *u){
 	MutexLockGuard lock(mutex);
 	readyNum--;
-	broadCast("Unready\n", u->getName() + "\n");
+	broadCast("Unready\n" + u->getName() + "\n");
 }
 
 void GameTable::chat(User *u, const char *val){
@@ -112,7 +115,7 @@ void GameTable::link(User *u, size_t x1, size_t y1, size_t x2, size_t y2){
 		broadCast("Link\n" + u->getName() + "\n" + "No\n");
 	}
 	else{
-		ret = game.link(x1, y1, x2, y2);
+		std::pair<bool, bool> ret = game.link(x1, y1, x2, y2);
 		if(ret.first){
 			u->plusScore();
 			broadCast("Link\n" + u->getName() + "\n" + "Yes\n");

@@ -12,7 +12,7 @@ private:
 	unsigned int id;
 	std::string name;
 public:
-	Account(): id(0), gameAll(-1), gameWin(-1), name(){}
+	Account(): id(0), gameAll(-1), gameWin(-1), name("admin"){}
 	
 	Account(unsigned int uid, int ga, int gw, const char *nm): id(uid), gameAll(ga), gameWin(gw), name(nm){}
 	

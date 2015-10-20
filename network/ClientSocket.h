@@ -16,8 +16,8 @@ public:
 	void setSockfd(int fd);
 	struct sockaddr_in* getAddrin();
 	void setRecvTimeo(struct timeval &tv);
-	int recvBuf(const char *buf, size_t mxSize);
+	int recvBuf(char *buf, size_t mxSize);
 	int sendBuf(const char *buf, size_t sz);
-	void close();
+	void closeSock();
 };
 #endif
