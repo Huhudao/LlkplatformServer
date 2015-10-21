@@ -74,7 +74,7 @@ pair<bool, bool> LlkInfo::link(size_t x1, size_t y1, size_t x2, size_t y2){
 	pair<bool, bool> res = make_pair(0, 0);
 	if(x1 < 0 || x1 >= row || x2 < 0 || x2 >= row) return res;
 	if(y1 < 0 || y1 >= col || y2 < 0 || y2 >= col) return res;
-	if(pictures[x1][y1] < 0 || pictures[x2][y2] < 0){
+	if(pictures[x1][y1] < 0 || pictures[x2][y2] < 0 || pictures[x1][y1] != pictures[x2][y2]){
 		res.second = (picRemain == 0);
 		return res;
 	}
