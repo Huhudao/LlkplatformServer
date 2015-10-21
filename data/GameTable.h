@@ -40,6 +40,7 @@ public:
 	bool isStarted();
 	bool attach(User *u);
 	std::string tableInfo();
+	int getId();
 	void detach(User *u);
 	void getReady(User *u);
 	void unReady(User *u);

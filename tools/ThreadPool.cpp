@@ -9,6 +9,7 @@ void ThreadPool::start(){
 	running = true;
 	for(size_t i = 0; i < maxNumThread; i++){
 		ThreadPtr thread(new Thread(boost::bind(&ThreadPool::threadFunc, this), "InPool"));
+		thread->start();
 		threads.push_back(thread);
 	}
 }
@@ -29,13 +30,14 @@ void ThreadPool::runTask(Task task){
 	logger.logDebug("ThreadPool receives task.");
 	MutexLockGuard lock(mutex);
 	if(taskQueue.size() < maxNumTask){
+		//logger.logDebug("")
 		taskQueue.push_back(task);
 		notEmpty.notify();
 	}
 }
 
 ThreadPool::Task ThreadPool::take(){
-	logger.logDebug("ThreadPool doing a task.");
+	//logger.logDebug("ThreadPool doing a task.");
 	MutexLockGuard lock(mutex);
 	while(running && taskQueue.empty()){
 		notEmpty.wait();
@@ -50,6 +52,7 @@ ThreadPool::Task ThreadPool::take(){
 
 void ThreadPool::threadFunc(){
 	while(running){
+		//logger.logDebug("trying to take a task.");
 		Task task(take());
 		if(task){
 			task();

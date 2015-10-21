@@ -5,9 +5,10 @@
 #include "Log.h"
 
 bool Condition::waitForSeconds(int seconds){
-	logger.logDebug("Condition waitForSeconds.");
 	struct timespec theTime;
-	clock_gettime(CLOCK_MONOTONIC, &theTime);
-	theTime.tv_sec += seconds;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	theTime.tv_sec = now.tv_sec + seconds;
+	theTime.tv_nsec = now.tv_usec * 1000;
 	return 0 == pthread_cond_timedwait(&condition, mutex.getMutex(), &theTime);
 }

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <iostream>
 
 #include "User.h"
 #include "GameTable.h"
@@ -34,6 +35,7 @@ GameTable::TablePtr GameTable::createTable(int p, int n){
 	MutexLockGuard lock(mutexNum);
 	TablePtr table(new GameTable(++tableNum, p, n));
 	put(table);
+	return table;
 }
 
 std::string GameTable::allTables(){
@@ -46,9 +48,6 @@ std::string GameTable::allTables(){
 }
 
 bool GameTable::isStarted(){
-	char cstr[50];
-	sprintf(cstr, "table %d is starting.", tableId);
-	logger.logInfo(cstr);
 	MutexLockGuard lock(mutex);
 	return started;
 }
@@ -73,13 +72,21 @@ std::string GameTable::tableInfo(){
 	return res;
 }
 
+int GameTable::getId(){
+	MutexLockGuard lock(mutex);
+	return tableId;
+}
+
 void GameTable::detach(User *u){
 	MutexLockGuard lock(mutex);
 	if(users.find(u) == users.end()){
 		logger.logError("user is not sitting in this table.");
 		return;
 	}
-	if(u->isReady()){
+	if(started){
+		endGame();
+	}
+	else if(u->isReady()){
 		readyNum--;
 	}
 	users.erase(u);
@@ -142,7 +149,7 @@ void GameTable::eraseTable(int id){
 void GameTable::startGame(){
 	game.init();
 	started = true;
-	broadCast("Start\n" + game.picsToStr() + "\n");
+	broadCast("Start\n" + game.picsToStr());
 }
 
 void GameTable::endGame(){

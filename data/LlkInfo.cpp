@@ -16,8 +16,10 @@ void LlkInfo::init(){
 	canGo = vector<vector<vector<int> > >(row, vector<vector<int> >(col, vector<int>(4)));
 	for(size_t i = 0; i < row; i++){
 		for(size_t j = 0; j < col; j++){
-			canGo[i][j][LlkInfo::up] = canGo[i][j][LlkInfo::down] = i;
-			canGo[i][j][LlkInfo::left] = canGo[i][j][LlkInfo::right] = j;
+			canGo[i][j][LlkInfo::up] = i - 1;
+			canGo[i][j][LlkInfo::down] = i + 1;
+			canGo[i][j][LlkInfo::left] = j - 1;
+			canGo[i][j][LlkInfo::right] = j + 1;
 		}
 	}
 	buildPics();
@@ -25,6 +27,9 @@ void LlkInfo::init(){
 
 void LlkInfo::buildPics(){
 	vector<int> picIds(picNum * mxNumPerPic);
+	for(size_t i = 0; i < picIds.size(); i++){
+		picIds[i] = rand() % picNum;
+	}
 	for(size_t i = 0; i < picIds.size(); i++){
 		size_t j = rand() % picIds.size();
 		if(i != j){
@@ -47,6 +52,12 @@ void LlkInfo::buildPics(){
 	for(size_t i = 0; i < cors.size(); i++){
 		pictures[cors[i].first][cors[i].second] = picIds[i / 2];
 	}
+	for(size_t i = 0; i < row; i++){
+		for(size_t j = 0; j < col; j++){
+			printf("%d ", pictures[i][j]);
+		}
+		puts("");
+	}
 }
 
 void LlkInfo::setSize(size_t n, size_t m){
@@ -55,7 +66,10 @@ void LlkInfo::setSize(size_t n, size_t m){
 }
 
 pair<bool, bool> LlkInfo::link(size_t x1, size_t y1, size_t x2, size_t y2){
-	assert(x1 != x2 || y1 != y2);
+	if(x1 == x2 && y1 == y2){
+		logger.logError("two same coordinates.");
+		return make_pair(0, 0);
+	}
 	logger.logDebug("user linking.");
 	pair<bool, bool> res = make_pair(0, 0);
 	if(x1 < 0 || x1 >= row || x2 < 0 || x2 >= row) return res;
@@ -116,24 +130,20 @@ bool LlkInfo::canGetVer(size_t x1, size_t y1, size_t x2, size_t y2){
 
 void LlkInfo::update(size_t x, size_t y){
 	logger.logDebug("updating game.");
-	int previ = (x + 1 < row ? x + 1 : x);
-	for(size_t i = x; i >= 0; i--){
-		canGo[i][y][LlkInfo::down] = canGo[previ][y][LlkInfo::down];
+	for(size_t i = x - 1; i >= 0; i--){
+		canGo[i][y][LlkInfo::down] = canGo[x][y][LlkInfo::down];
 		if(pictures[i][y] >= 0) break;
 	}
-	previ = (x - 1 >= 0 ? x - 1 : x);
-	for(size_t i = x; i < row; i++){
-		canGo[i][y][LlkInfo::up] = canGo[previ][y][LlkInfo::up];
+	for(size_t i = x + 1; i < row; i++){
+		canGo[i][y][LlkInfo::up] = canGo[x][y][LlkInfo::up];
 		if(pictures[i][y] >= 0) break;
 	}
-	int prevj = (y + 1 < col ? y + 1 : y);
-	for(size_t j = y; j >= 0; j--){
-		canGo[x][j][LlkInfo::right] = canGo[x][prevj][LlkInfo::right];
+	for(size_t j = y - 1; j >= 0; j--){
+		canGo[x][j][LlkInfo::right] = canGo[x][y][LlkInfo::right];
 		if(pictures[x][j] >= 0) break;
 	}
-	prevj = (y - 1 >= 0 ? y - 1 : y);
-	for(size_t j = y; j < col; j++){
-		canGo[x][j][LlkInfo::left] = canGo[x][prevj][LlkInfo::left];
+	for(size_t j = y + 1; j < col; j++){
+		canGo[x][j][LlkInfo::left] = canGo[x][y][LlkInfo::left];
 		if(pictures[x][j] >= 0) break;
 	}
 }

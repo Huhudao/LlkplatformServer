@@ -6,7 +6,7 @@
 
 class Buffer{
 private:
-	static const size_t maxLength = (1 << 20);
+	static const size_t maxLength = (1 << 10);
 	char *buff;
 	size_t readInd;
 	size_t writeInd;

@@ -2,35 +2,13 @@
 #define HELPS_H
 
 #include <utility>
+#include <string.h>
+#include <string>
 #include <boost/shared_ptr.hpp>
+#include "Buffer.h"
 
-template <typename T>
-void movePtr(boost::shared_ptr<T> &sp1, boost::shared_ptr<T> &sp2){
-	sp1 = sp2;
-	sp2.reset();
-}
+void mod(int &a, const int &m);
 
-void mod(int &a, const int &m){
-	while(a >= m){
-		a -= m;
-	}
-}
-
-std::string uitos(unsigned int v){
-	if(v == 0){
-		return "0";
-	}
-	char str[15];
-	int p = 0;
-	memset(str, 0, sizeof(str));
-	while(v > 0){
-		str[p++] = v % 10 + '0';
-		v /= 10;
-	}
-	for(int i = 0, j = p - 1; i < p / 2; i++, j--){
-		std::swap(str[i], str[j]);
-	}
-	return std::string(str);
-}
+std::string uitos(unsigned int v);
 
 #endif

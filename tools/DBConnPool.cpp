@@ -30,6 +30,8 @@ void DBConnPool::start(){
 	assert(working.empty());
 	for(size_t i = 0; i < initSize; i++){
 		MYSQL *mysql = mysql_init(NULL);
+		mysql = mysql_real_connect(mysql, NULL, "root", "", "llkplatform", 0, NULL, 0);
+		assert(mysql);
 		spare.push_back(mysql);
 	}
 }
@@ -58,4 +60,5 @@ MYSQL* DBConnPool::take(){
 		spare.pop_front();
 	}
 	working.insert(mysql);
+	return mysql;
 }

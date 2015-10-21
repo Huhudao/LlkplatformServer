@@ -1,6 +1,8 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <stdio.h>
+
 #include "../tools/Log.h"
 #include "../tools/Thread.h"
 #include "../tools/ThreadPool.h"

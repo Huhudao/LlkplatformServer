@@ -61,7 +61,7 @@ private:
 	bool signUp(string &name, string &pwd);
 	bool signIn(std::string &name, string &pwd);
 	bool sit(string &stableId, string &sp, string &sn);
-	void stand();
+	void stand(bool cksat);
 	void chat(string &sval);
 	void link(string &sx1, string &sy1, string &sx2, string &sy2);
 	void beReady();

@@ -51,9 +51,6 @@ void Account::logIn(unsigned int uid, int ga, int gw, const char *nm){
 }
 
 void Account::logOut(MYSQL *mysql){
-	id = 0;
-	gameAll = gameWin = -1;
-	name = "admin";
 	char query[100];
 	sprintf(query, "update userinfo set gameall = %d where id = %d", gameAll, id);
 	int ret = mysql_query(mysql, query);

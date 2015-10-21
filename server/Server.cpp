@@ -1,13 +1,15 @@
 #include "Server.h"
 
+DBConnPool dbconnPool;
+
 Log logger;
 
 int main(){
 	logger.start();
-	logger.logInfo("Server started\n");
+	logger.logInfo("Server started.");
+	printf("started\n");
 	ThreadPool threadPool;
 	threadPool.start();
-	DBConnPool dbconnPool;
 	dbconnPool.start();
 	Address serverAddress(AF_INET, 1111, INADDR_ANY);
 	ServerSocket server(serverAddress);

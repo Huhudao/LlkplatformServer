@@ -23,4 +23,6 @@ public:
 	void put(MYSQL* mysql);
 	MYSQL* take();
 };
+
+extern DBConnPool dbconnPool;
 #endif

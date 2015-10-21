@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -6,6 +7,7 @@
 #include "GameTable.h"
 #include "../tools/helps.h"
 #include "../tools/Log.h"
+#include "../tools/DBConnPool.h"
 
 Mutex User::mutexUsers;
 set<User*> User::users;
@@ -25,11 +27,11 @@ const string endP = "End\n";           //10 0
 const string echoP = "Echo\n";         //11 0
 const string yesP = "Yes\n";
 const string noP = "No\n";
-const int sec = 5;
+const int sec = 3;
 const int usec = 0;
 const int mxBuf = 128;
 const int logsz = 50;
-const clock_t mxOff = 8000;
+const clock_t mxOff = 15000;
 
 void User::push(User *u){
 	MutexLockGuard lock(mutexUsers);
@@ -103,9 +105,10 @@ bool User::signUp(string &name, string &pwd){
 		return false;
 	}
 	char cstr[logsz];
-	sprintf(cstr, "%s signing up.", name.c_str());
+	sprintf(cstr, "%s is signing up.", name.c_str());
 	logger.logInfo(cstr);
 	char query[100];
+	assert(mysql);
 	sprintf(query, "select id from userinfo where name = \'%s\'", name.c_str());
 	int ret = mysql_query(mysql, query);
 	assert(ret == 0);
@@ -170,7 +173,7 @@ bool User::sit(string &stableId, string &sp, string &sn){
 		if(theTable->attach(this)){
 			table = theTable;
 			init();
-			broadCast(sitP + getName() + "\n" + stableId + "\n"
+			broadCast(sitP + getName() + "\n" + uitos(table->getId()) + "\n"
 					+ sp + "\n");
 			return true;
 		}
@@ -187,13 +190,18 @@ bool User::sit(string &stableId, string &sp, string &sn){
 	}
 }
 
-void User::stand(){
-	if(!checkSat()){
+void User::stand(bool cksat){
+	if(!checkSigned()){
 		return;
 	}
-	char cstr[logsz];
-	sprintf(cstr, "%s stand.", getName().c_str());
-	logger.logDebug(cstr);
+	if(cksat){
+		if(!checkSat()){
+			return;
+		}
+		char cstr[logsz];
+		sprintf(cstr, "%s stand.", getName().c_str());
+		logger.logDebug(cstr);
+	}
 	init();
 	if(table){
 		table->detach(this);
@@ -203,6 +211,9 @@ void User::stand(){
 }
 
 void User::chat(string &val){
+	if(!checkSigned()){
+		return;
+	}
 	if(!checkSat()){
 		return;
 	}
@@ -213,6 +224,9 @@ void User::chat(string &val){
 }
 
 void User::link(string &sx1, string &sy1, string &sx2, string &sy2){
+	if(!checkSigned()){
+		return;
+	}
 	if(!checkSat()){
 		return;
 	}
@@ -223,7 +237,13 @@ void User::link(string &sx1, string &sy1, string &sx2, string &sy2){
 }
 
 void User::beReady(){
+	if(!checkSigned()){
+		return;
+	}
 	if(!checkSat()){
+		return;
+	}
+	if(ready){
 		return;
 	}
 	char cstr[logsz];
@@ -235,7 +255,13 @@ void User::beReady(){
 }
 
 void User::unReady(){
+	if(!checkSigned()){
+		return;
+	}
 	if(!checkSat()){
+		return;
+	}
+	if(!ready){
 		return;
 	}
 	char cstr[logsz];
@@ -251,6 +277,9 @@ void User::echo(){
 }
 
 void User::end(){
+	if(!checkSigned()){
+		return;
+	}
 	if(!checkSat()){
 		return;
 	}
@@ -267,9 +296,9 @@ void User::logOut(){
 	char cstr[logsz];
 	sprintf(cstr, "%s logout.", getName().c_str());
 	logger.logInfo(cstr);
+	stand(false);
 	hasSignIn = false;
 	account.logOut(mysql);
-	stand();
 	User::erase(this);
 	broadCast(logoutP + account.getName() + "\n");
 }
@@ -287,9 +316,6 @@ bool User::checkSigned(){
 }
 
 bool User::checkSat(){
-	if(!checkSigned()){
-		return false;
-	}
 	if(!table){
 		char cstr[logsz];
 		sprintf(cstr, "%s not sat.", getName().c_str());
@@ -315,7 +341,7 @@ void User::solve(int id, string *strs, bool &connecting){
 		case 1: signUp(strs[0], strs[1]); break;
 		case 2: signIn(strs[0], strs[1]); break;
 		case 3: sit(strs[0], strs[1], strs[2]); break;
-		case 4: stand(); break;
+		case 4: stand(true); break;
 		case 5: beReady(); break;
 		case 6: unReady(); break;
 		case 7: chat(strs[0]); break;
@@ -345,6 +371,7 @@ pair<int, int> User::qryType(string &str){
 }
 
 void User::threadFunc(){
+	logger.logInfo("a connection in.");
 	bool connecting = true;
 	clock_t timeNow;
 	struct timeval tv;
@@ -370,25 +397,26 @@ void User::threadFunc(){
 			recvNum = sock->recvBuf(buf + end, begin - end);
 		}
 		timeNow = clock();
-		if(recvNum <= 0 || (lastTime > 0 && recvNum - lastTime > mxOff)){
+		if(recvNum == 0 || ( recvNum < 0 && lastTime > 0 && recvNum - lastTime > mxOff)){
 			if(recvNum < 0) logger.logError("socket recv error.");
 			else logger.logInfo("connection out.");
 			connecting = false;
 			break;
 		}
+		if(recvNum < 0) continue;
 		lastTime = timeNow;
 		nend = end + recvNum;
 		num += recvNum;
 		mod(nend, mxBuf);
-		for(int i = end; i != nend && connecting;){
-			if(buf[i] == '\n'){
-				if(begin <= i){
-					cmd = string(buf+ begin, i - begin + 1);
+		while(end != nend && connecting){
+			if(buf[end] == '\n'){
+				if(begin <= end){
+					cmd = string(buf+ begin, end - begin + 1);
 				}
 				else{
-					cmd = string(buf + begin, mxBuf - begin) + string(buf, i + 1);
+					cmd = string(buf + begin, mxBuf - begin) + string(buf, end + 1);
 				}
-				begin = i + 1;
+				begin = end + 1;
 				num -= cmd.length();
 				mod(begin, mxBuf);
 				if(qry.first == 0) qry = qryType(cmd);
@@ -398,15 +426,16 @@ void User::threadFunc(){
 					qry = make_pair(0, 0);
 					argsNum = 0;
 				}
-				else{
+				else if(argsNum > qry.second){
 					logger.logError("qry args wrong.");
 				}
 			}
-			i++;
-			mod(i, mxBuf);
+			end++;
+			mod(end, mxBuf);
 		}
 	}
 	logOut();
+	dbconnPool.put(mysql);
 	closeSock();
 	destroy();
 }

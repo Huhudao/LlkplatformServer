@@ -1,3 +1,4 @@
+#include <utility>
 #include <time.h>
 #include <sys/time.h>
 #include <boost/bind.hpp>
@@ -16,7 +17,7 @@ Log::Log():
 	hasBuffer(mutex),
 	thread(boost::bind(&Log::threadFunc, this), std::string("Logger")) {
 	level = DEBUG;
-	file = fopen("/var/Llkplatform/llk.log", "a+");
+	file = fopen("./llk.log", "a+");
 	assert(file != NULL);
 	buffers.clear();
 }
@@ -43,7 +44,7 @@ void Log::setFile(char *path){
 	if(file != NULL){
 		fclose(file);
 	}
-	file = fopen(path, "wa+");
+	file = fopen(path, "a+");
 	assert(file != NULL);
 }
 
@@ -63,17 +64,17 @@ void Log::logMessage(const char *type, const char *val){
 			val);
 	len = strlen(buf);
 	if(curr->sizeRemain() >= len){
-		curr->append(val, len);
+		curr->append(buf, len);
 	}
 	else{
 		buffers.push_back(curr);
 		if(next){
-			movePtr(curr, next);
+			curr = std::move(next);
 		}
 		else{
 			curr.reset(new Buffer());
 		}
-		curr->append(val, len);
+		curr->append(buf, len);
 		hasBuffer.notify();
 	}
 }
@@ -112,10 +113,10 @@ void Log::threadFunc(){
 			hasBuffer.waitForSeconds(seconds);
 		}
 		buffers.push_back(curr);
-		movePtr(curr, spare1);
+		curr = std::move(spare1);
 		std::swap(buffers, buffersToWrite);
 		if(!next){
-			movePtr(next, spare2);
+			next = std::move(spare2);
 		}
 
 		assert(!buffersToWrite.empty());
